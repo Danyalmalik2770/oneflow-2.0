@@ -48,6 +48,8 @@ coordinates (the canvas is width x height). An element id that appears
 in two neighbouring beats MORPHS between its two definitions across
 the boundary; an id that appears only in the new beat enters (fade +
 grow); an id that disappears exits (fade out at the beat's end).
+Layering: within a beat, elements listed later paint above elements
+listed earlier — list backgrounds first, heroes and labels last.
 
 Free for everyone, forever — MIT licensed. See LICENSE.
 """
@@ -96,15 +98,18 @@ function hexRgb(h){ h = String(h||'#000000').replace('#','');
 function lerpColor(a,b,p){ const A=hexRgb(a), B=hexRgb(b);
   return 'rgb(' + A.map((v,i)=>Math.round(lerp(v,B[i],p))).join(',') + ')'; }
 
-// build DOM for every element id that ever appears
+// build DOM for every element id that ever appears; an element that
+// is a card in ANY beat gets the card's inner structure from the start,
+// because a carried element may morph into a card mid-film
 const els = {};
+const anyCard = {};
+for (const b of SHEET.beats) for (const e of b.elements)
+  if (e.kind === 'card') anyCard[e.id] = true;
 for (const b of SHEET.beats) for (const e of b.elements) {
   if (els[e.id]) continue;
   const d = document.createElement('div');
-  d.className = 'el ' + (e.kind === 'card' ? 'card' : e.kind === 'text' ? 'text' : '');
-  if (e.kind === 'card') {
-    d.innerHTML = '<div class="t"></div><div class="s"></div>';
-  }
+  d.className = 'el';
+  if (anyCard[e.id]) d.innerHTML = '<div class="t"></div><div class="s"></div>';
   world.appendChild(d); els[e.id] = d;
 }
 
@@ -128,6 +133,8 @@ function camAt(t) {
 const NUM = ['x','y','w','h','size','radius','width','opacity','rotate','tsize','ssize'];
 function styleFor(e, d, opacityScale) {
   const kind = e.kind;
+  d.classList.toggle('card', kind === 'card');
+  d.classList.toggle('text', kind === 'text');
   d.style.left = e.x + 'px'; d.style.top = e.y + 'px';
   d.style.opacity = (e.opacity != null ? e.opacity : 1) * opacityScale;
   let tr = 'translate(-50%,-50%)';
@@ -152,6 +159,7 @@ function styleFor(e, d, opacityScale) {
   } else if (kind === 'card') {
     d.style.width = e.w + 'px'; d.style.height = e.h + 'px';
     d.style.background = e.color || '#1d2126';
+    if (!d.querySelector('.t')) d.innerHTML = '<div class="t"></div><div class="s"></div>';
     const t = d.querySelector('.t'), s = d.querySelector('.s');
     t.textContent = e.title || ''; t.style.fontSize = (e.tsize || 54) + 'px';
     t.style.color = e.tcolor || '#f5f6f8';
@@ -188,6 +196,8 @@ window.seek = function(t) {
     'translate(' + (W/2 - cam.x*cam.zoom) + 'px,' + (H/2 - cam.y*cam.zoom) + 'px)' +
     ' scale(' + cam.zoom + ')';
   const i = beatAt(t), beat = SHEET.beats[i], lt = t - starts[i];
+  // layering rule: within a beat, later elements paint above earlier ones
+  const zmap = {}; beat.elements.forEach((e, idx) => { zmap[e.id] = idx + 1; });
   const prev = SHEET.beats[i-1], next = SHEET.beats[i+1];
   const cur = {}; for (const e of beat.elements) cur[e.id] = e;
   const prv = {}; if (prev) for (const e of prev.elements) prv[e.id] = e;
@@ -207,6 +217,7 @@ window.seek = function(t) {
         if (remain < 0.3) os *= clamp01(remain / 0.3);
       }
       d.style.display = 'block';
+      d.style.zIndex = zmap[id] || 0;
       styleFor(e, d, os);
     } else {
       d.style.display = 'none';

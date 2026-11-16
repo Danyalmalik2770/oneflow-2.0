@@ -46,8 +46,56 @@ python3 make_film.py templates/launch-cashcow.json -o film.mp4 --blur 2
 `--blur 2` renders at double frame rate and averages frame pairs —
 real temporal motion blur, so fast morphs smear instead of strobing.
 
-The demo film (the Cashcow launch sheet above, rendered) is in
-[`demo/`](demo/).
+That template is also the launch-film case in the gallery below —
+sheet, breakdown and checker verdict included.
+
+## Films made with it
+
+Every case ships its **film sheet** (the source — render the film
+yourself with one command) and a **breakdown**: the concept, the beat
+sheet, and the continuity checker's measured verdict. Nothing here is
+a black box.
+
+### Concept ad
+
+- **seed** — one seed is the whole film: a dot becomes a stem, the
+  stem's bud opens into a ring of light, and everything folds back
+  into a seed. [Breakdown](cases/seed/README.md)
+
+### Launch film
+
+- **cashcow-launch** — a dot stretches into the prompt bar, the bar
+  becomes the logo plate, and the feature cards grow out of the
+  plate. [Breakdown](cases/cashcow-launch/README.md)
+
+### App promo
+
+- **tidy** — a scatter of clutter is swept into order by one bar,
+  which then becomes the app window itself.
+  [Breakdown](cases/tidy/README.md)
+
+### Feature demo
+
+- **chip** — the pointer is the thread: a dot becomes the selection,
+  the selection flies down and becomes a chip in the input, and the
+  chip grows into the result card. [Breakdown](cases/chip/README.md)
+
+## How a film is made
+
+1. **One sentence about the picture** — the single visual thread
+   ("one dot becomes everything"). If the concept needs a paragraph,
+   it is not a concept yet.
+2. **The beat sheet** — beats of *varied* lengths; every beat names
+   the element that carries across its boundary.
+3. **The carry check** — `check_film.py` proves each carry exists on
+   both sides of its boundary and measures the visual jump there.
+4. **The render** — deterministic: the same sheet always produces
+   the same film.
+5. **The verdict** — the film is shown with its checker numbers,
+   not just its best frame.
+
+The full protocol, written for humans and AI agents, is in
+[`SKILL.md`](SKILL.md).
 
 ## Write your own film
 

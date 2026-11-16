@@ -66,8 +66,9 @@ the boundary: if the picture jumps, it was a cut, and the film fails.
   jump measurement with a printed carry score per boundary).
 - `templates/launch-cashcow.json` — a complete working film sheet:
   a launch film for Cashcow, an open-source video maker.
-- `demo/` — the rendered demo film, so you can see the target feel
-  before writing a sheet.
+- `cases/` — finished films (concept ad, launch film, app promo,
+  feature demo), each with its sheet and a breakdown carrying the
+  checker's verdict. Study these before writing a new sheet.
 
 ## Requirements
 
