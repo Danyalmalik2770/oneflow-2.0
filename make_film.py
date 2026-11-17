@@ -150,6 +150,10 @@ function styleFor(e, d, opacityScale) {
   const kind = e.kind;
   d.classList.toggle('card', kind === 'card');
   d.classList.toggle('text', kind === 'text');
+  // reset per-kind paint state: an element that morphs across kinds
+  // must not keep the previous kind's border or corner radius
+  d.style.border = 'none';
+  d.style.borderRadius = kind === 'card' ? '28px' : '0px';
   d.style.left = e.x + 'px'; d.style.top = e.y + 'px';
   d.style.opacity = (e.opacity != null ? e.opacity : 1) * opacityScale;
   let tr = 'translate(-50%,-50%)';
