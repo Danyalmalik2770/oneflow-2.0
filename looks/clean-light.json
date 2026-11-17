@@ -1,0 +1,13 @@
+{
+  "name": "clean-light",
+  "about": "Warm paper-white stage, near-black ink, one warm accent. For feature demos and explainers that should feel friendly, not flashy.",
+  "background": "#f6f4ef",
+  "palette": {
+    "hero": "#17191d",
+    "ink": "#17191d",
+    "muted": "#8a8378",
+    "card": "#ffffff",
+    "accent": "#ff7847",
+    "onhero": "#ffffff"
+  }
+}

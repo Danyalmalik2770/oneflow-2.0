@@ -38,16 +38,50 @@ pip install playwright pillow
 playwright install chromium
 # plus ffmpeg on your PATH
 
-python3 check_film.py templates/launch-cashcow.json   # continuity check
-python3 make_film.py templates/launch-cashcow.json -o film.mp4
-python3 make_film.py templates/launch-cashcow.json -o film.mp4 --blur 2
+python3 check_film.py templates/product-launch.json   # continuity check
+python3 make_film.py templates/product-launch.json -o film.mp4 --blur 2 --sound
 ```
 
 `--blur 2` renders at double frame rate and averages frame pairs —
 real temporal motion blur, so fast morphs smear instead of strobing.
+`--sound` scores the film from its own events and muxes the score in
+(see **Sound** below).
 
-That template is also the launch-film case in the gallery below —
-sheet, breakdown and checker verdict included.
+## Looks
+
+A film sheet can name a **look** — a small JSON file in
+[`looks/`](looks/) with a background and a colour palette:
+
+```json
+{ "title": "Orbit", "look": "midnight-launch", "beats": [ ... ] }
+```
+
+Elements then use palette tokens instead of raw hex — `"$hero"`,
+`"$ink"`, `"$card"`, `"$accent"`, `"$muted"`, `"$onhero"` — and the
+whole film can be re-skinned by changing one word. Four presets ship
+with the repo: `midnight-launch` (dark stage, hot yellow hero),
+`clean-light` (warm paper white, friendly), `neon-pop` (violet-black,
+electric), `paper-craft` (craft paper, calm). Copy one and tweak it
+to make your own.
+
+## Sound
+
+OneFlow scores its own films. `make_sound.py` reads the film sheet
+and synthesises the score from what actually happens on screen:
+
+- a soft pad chord under every beat;
+- a **whoosh at every carried boundary**, sized by how far the
+  camera travelled;
+- a **pluck for every element that enters**, pitched from a scale
+  by the element's id;
+- a **low hit on the final beat** — the landing.
+
+A beat can set `"sound": "none"` (rest beats stay quiet) or
+`"sound": "hit"` (force a hit). No audio files, no samples, no
+library music — and because the sound is derived from the beats, it
+always fits the action. Run it standalone
+(`python3 make_sound.py <sheet.json> -o sound.wav`) or let
+`make_film.py --sound` mux it straight into the render.
 
 ## Films made with it
 
@@ -67,6 +101,11 @@ a black box.
 - **cashcow-launch** — a dot stretches into the prompt bar, the bar
   becomes the logo plate, and the feature cards grow out of the
   plate. [Breakdown](cases/cashcow-launch/README.md)
+- **orbit-launch** — a smart lamp wakes up: a dot of light opens
+  into the lamp's ring, the ring floats up as its three features
+  arrive, then folds back into a single point of light over the
+  name. Rendered in the `midnight-launch` look, with sound scored
+  from its beats. [Breakdown](cases/orbit-launch/README.md)
 
 ### App promo
 
@@ -79,6 +118,10 @@ a black box.
 - **chip** — the pointer is the thread: a dot becomes the selection,
   the selection flies down and becomes a chip in the input, and the
   chip grows into the result card. [Breakdown](cases/chip/README.md)
+- **flowboard-demo** — a tap becomes a highlight, the highlight
+  flies down and becomes a chip in the input bar, and the chip grows
+  into the Done card. Rendered in the `clean-light` look, with sound
+  scored from its beats. [Breakdown](cases/flowboard-demo/README.md)
 
 ## How a film is made
 
@@ -99,12 +142,16 @@ The full protocol, written for humans and AI agents, is in
 
 ## Write your own film
 
-A film is one JSON file — beats, elements, a camera. The full format
-is documented in the docstring of [`make_film.py`](make_film.py);
-the working template is
-[`templates/launch-cashcow.json`](templates/launch-cashcow.json).
-The method — concept, beat sheet, carries, camera, rests — is written
-up for humans and AI agents alike in [`SKILL.md`](SKILL.md).
+A film is one JSON file — beats, elements, a camera, and a named
+look. The full format is documented in the docstring of
+[`make_film.py`](make_film.py); start from a template and rewrite
+its beats: [`templates/product-launch.json`](templates/product-launch.json)
+for a launch, [`templates/feature-demo.json`](templates/feature-demo.json)
+for a feature walk-through,
+[`templates/launch-cashcow.json`](templates/launch-cashcow.json) for
+the original hand-coloured style. The method — concept, beat sheet,
+carries, camera, rests, sound — is written up for humans and AI
+agents alike in [`SKILL.md`](SKILL.md).
 
 Five element kinds: `dot`, `bar`, `text`, `card`, `ring`. An element
 id that appears in two neighbouring beats morphs between its two
@@ -124,8 +171,9 @@ would follow.
 - Films are HTML/CSS elements on one plane — product shots are
   rebuilt as elements, not filmed footage. That is the style, and it
   is why the camera can move through them at any zoom.
-- No sound design yet: render silent, add music/voice in your editor
-  (or with a sister tool like Cashcow). Sound is on the roadmap.
+- The built-in sound is a synthesised score grown from the film's
+  beats — fitted, but instrumental only. For voice-over or a licensed
+  music track, mux your own audio over the render in an editor.
 - Text that changes on a carried element swaps at the boundary;
   geometry, colour and position are what morph.
 

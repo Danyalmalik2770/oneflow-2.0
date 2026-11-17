@@ -26,6 +26,7 @@ Film sheet format:
     {
       "title": "My film",
       "width": 1080, "height": 1920, "fps": 30,
+      "look": "midnight-launch",  // optional: a look from looks/
       "background": "#0d0f12",
       "morph": 0.5,               // seconds a carry morphs across a boundary
       "beats": [
@@ -50,6 +51,20 @@ the boundary; an id that appears only in the new beat enters (fade +
 grow); an id that disappears exits (fade out at the beat's end).
 Layering: within a beat, elements listed later paint above elements
 listed earlier — list backgrounds first, heroes and labels last.
+
+Looks: a sheet may name a "look" (a JSON file in looks/, or a path to
+one). The look supplies the background (when the sheet does not set
+one) and a colour palette. Element "color"/"tcolor" values written as
+"$hero", "$ink", "$card", "$accent", "$muted", "$onhero" are replaced
+from the palette before rendering, so one sheet can be re-skinned by
+changing a single word. Copy a look file and tweak it to make your own.
+
+Sound: render with --sound and OneFlow scores the film from its own
+events (see make_sound.py): a soft pad under everything, a whoosh at
+every carried boundary sized by how far the camera travelled, plucks
+when elements enter, a low hit on the final beat. A beat may set
+"sound": "none" to silence its events, or "sound": "hit" to force a
+hit at its start.
 
 Free for everyone, forever — MIT licensed. See LICENSE.
 """
@@ -229,6 +244,45 @@ window.TOTAL = TOTAL;
 """
 
 
+LOOKS_DIR = Path(__file__).parent / "looks"
+
+
+def load_look(name):
+    p = Path(name)
+    if not p.exists():
+        p = LOOKS_DIR / (str(name) + ".json")
+    if not p.exists():
+        raise SystemExit(f"look not found: {name} (looked in {LOOKS_DIR})")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def resolve_sheet(sheet):
+    """Apply the sheet's named look: default background + $palette
+    colour tokens on elements. Returns a resolved copy; the sheet on
+    disk keeps its tokens, so it can be re-skinned by renaming the look."""
+    import copy
+    sheet = copy.deepcopy(sheet)
+    name = sheet.get("look")
+    if not name:
+        return sheet
+    look = load_look(name)
+    palette = look.get("palette", {})
+    if not sheet.get("background"):
+        sheet["background"] = look.get("background", "#0d0f12")
+    for beat in sheet.get("beats", []):
+        for el in beat.get("elements", []):
+            for key in ("color", "tcolor"):
+                v = el.get(key)
+                if isinstance(v, str) and v.startswith("$"):
+                    token = v[1:]
+                    if token not in palette:
+                        raise SystemExit(
+                            f"look {name!r} has no colour ${token} "
+                            f"(palette has: {', '.join(sorted(palette))})")
+                    el[key] = palette[token]
+    return sheet
+
+
 def build_html(sheet):
     return HTML_TEMPLATE.replace("__SHEET_JSON__", json.dumps(sheet))
 
@@ -289,11 +343,28 @@ def main():
     ap.add_argument("-o", "--output", default="film.mp4", help="output MP4")
     ap.add_argument("--blur", type=int, default=1,
                     help="temporal motion-blur factor (2 = average frame pairs)")
+    ap.add_argument("--sound", action="store_true",
+                    help="score sound from the film's own events and mux it in")
     args = ap.parse_args()
     sheet = json.loads(Path(args.sheet).read_text(encoding="utf-8"))
     if not sheet.get("beats"):
         raise SystemExit("the film sheet needs a non-empty 'beats' list")
+    sheet = resolve_sheet(sheet)
     render(sheet, args.output, blur=args.blur)
+    if args.sound:
+        import make_sound
+        out = Path(args.output)
+        wav = out.with_suffix(".sound.wav")
+        make_sound.synthesize(sheet, wav)
+        muxed = out.with_suffix(".mux.mp4")
+        subprocess.run(
+            ["ffmpeg", "-y", "-v", "error", "-i", str(out), "-i", str(wav),
+             "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+             "-c:a", "aac", "-b:a", "160k", "-shortest", str(muxed)],
+            check=True)
+        muxed.replace(out)
+        wav.unlink(missing_ok=True)
+        print(f"sound: scored from the film's events and muxed into {out}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,13 @@
+{
+  "name": "neon-pop",
+  "about": "Deep violet-black stage with electric pink and cyan. For launches that want energy.",
+  "background": "#0b0614",
+  "palette": {
+    "hero": "#e879f9",
+    "ink": "#fafafa",
+    "muted": "#a78bca",
+    "card": "#1d1033",
+    "accent": "#22d3ee",
+    "onhero": "#1b1030"
+  }
+}

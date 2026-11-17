@@ -30,7 +30,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from make_film import build_html, total_duration
+from make_film import build_html, resolve_sheet, total_duration
 
 JUMP_LIMIT = 30.0  # mean absolute pixel difference (0-255) at a boundary
 
@@ -72,7 +72,7 @@ def main():
     ap.add_argument("--no-visual", action="store_true",
                     help="only run the carry check on the sheet, skip rendering")
     args = ap.parse_args()
-    sheet = json.loads(Path(args.sheet).read_text(encoding="utf-8"))
+    sheet = resolve_sheet(json.loads(Path(args.sheet).read_text(encoding="utf-8")))
     beats = sheet.get("beats", [])
     if len(beats) < 2:
         print("FAIL: a one-take film needs at least 2 beats")

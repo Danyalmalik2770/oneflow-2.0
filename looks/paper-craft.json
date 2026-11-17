@@ -1,0 +1,13 @@
+{
+  "name": "paper-craft",
+  "about": "Warm craft-paper stage, burnt-orange hero, deep green accent. Handmade, honest, calm.",
+  "background": "#efe6d8",
+  "palette": {
+    "hero": "#d9552c",
+    "ink": "#2b2118",
+    "muted": "#a08b6d",
+    "card": "#fffaf0",
+    "accent": "#2e7d5b",
+    "onhero": "#fffaf0"
+  }
+}
